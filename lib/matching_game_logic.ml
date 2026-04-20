@@ -1,6 +1,7 @@
 (*Matching game backend*)
 (*Randomly choose terms + defs *)
 (*Give correct/inc*)
+(*Assumes for each word, there is only 1 def*)
 
 let sample_terms : (string * string) list =
   [
@@ -106,7 +107,8 @@ let check_guess (guess : string) : bool =
           begin if def = def_val then begin
             (*Increase number of correct guesses*)
             num_corr := !num_corr + 1;
-            (*Update game_arr to not include matches already correctly found*)
+            (*Update word_assn and def_assn to not include matches already
+              correctly found*)
             update_arrs word_num def_str;
             true
           end
