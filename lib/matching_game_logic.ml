@@ -31,18 +31,16 @@ let word_arr : string array = Array.make 10 ""
 let def_arr : string array = Array.make 10 ""
 
 (*Hold number-word associations*)
-let word_assn : (int * string) array = Array.make 10 (0, "")
+let word_assn : (int * string) array ref = ref (Array.make 10 (0, ""))
 
 (*Hold char-def associations*)
-let def_assn : (string * string) array = Array.make 10 ("z", "")
+let def_assn : (string * string) array ref = ref (Array.make 10 ("z", ""))
 
 (*Hold number of incorrect matching attempts*)
 let num_inc : int ref = ref 0
 
-(*Array.make ideal_length default_elem*)
-(*Array.iter function array*)
-(*Array.init function_taking_index array*)
-(*Array.map2 function array1 array2*)
+(*Hold number of correct matching attempts*)
+let num_corr : int ref = ref 0
 
 (*Randomly choose 10 word-def pairs*)
 
@@ -52,7 +50,7 @@ let assign_print () : unit =
     (*assign words to a number from [1,10]*)
     let all_nums : int array = [| 1; 2; 3; 4; 5; 6; 7; 8; 9; 10 |] in
     for i = 0 to 9 do
-      word_assn.(i) <- (all_nums.(i), word_arr.(i))
+      !word_assn.(i) <- (all_nums.(i), word_arr.(i))
     done;
 
     (*assign words to a number from [1,10]*)
@@ -62,8 +60,25 @@ let assign_print () : unit =
     Array.shuffle ~rand:Random.int def_arr;
     for i = 0 to 9 do
       (*Shuffle order of elements in def_arr*)
-      def_assn.(i) <- (all_strs.(i), def_arr.(i))
+      !def_assn.(i) <- (all_strs.(i), def_arr.(i))
     done
+  end
+
+(*Update arrays when correct matches found*)
+let update_arrs (word_num : int) (def_str : string) : unit =
+  begin
+    (*For each word in word_assn, if it is not the matched word, include it in
+      def_assn*)
+    let word_assn_list : (int * string) list = Array.to_list !word_assn in
+    let def_assn_list : (string * string) list = Array.to_list !def_assn in
+    let word_assn_2_lst : (int * string) list =
+      List.filter (fun (num, wd) -> num <> word_num) word_assn_list
+    in
+    let def_assn_2_lst : (string * string) list =
+      List.filter (fun (str, df) -> str <> def_str) def_assn_list
+    in
+    word_assn := Array.of_list word_assn_2_lst;
+    def_assn := Array.of_list def_assn_2_lst
   end
 
 (*Check if a guess is correct and update remaining match choices + score accordingly*)
@@ -73,19 +88,28 @@ let check_guess (guess : string) : bool =
   let word_num : int = int_of_string (List.nth guess_info 0) in
   let def_str : string = List.nth guess_info 1 in
   (*find word guessed from word_assn array*)
-  let word_val : string = snd word_assn.(word_num - 1) in
+  let word_val : string =
+    snd
+      (Option.get (Array.find_opt (fun (num, wd) -> num = word_num) !word_assn))
+  in
   (*find def guessed from def_assn based on associated string*)
   (*find index for that guess in def_assn*)
   let def_str_index : int =
-    Option.get (Array.find_index (fun (c, def) -> c = def_str) def_assn)
+    Option.get (Array.find_index (fun (c, def) -> c = def_str) !def_assn)
   in
-  let def_val : string = snd def_assn.(def_str_index) in
+  let def_val : string = snd !def_assn.(def_str_index) in
   (*Check correctness*)
   let corr : bool =
     Array.for_all
       (fun (word, def) ->
         begin if word = word_val then
-          begin if def = def_val then true
+          begin if def = def_val then begin
+            (*Increase number of correct guesses*)
+            num_corr := !num_corr + 1;
+            (*Update game_arr to not include matches already correctly found*)
+            update_arrs word_num def_str;
+            true
+          end
           else begin
             (*increase count of incorrect guesses*)
             num_inc := !num_inc + 1;
