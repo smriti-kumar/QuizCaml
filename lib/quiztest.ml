@@ -2,7 +2,7 @@
   input is within the acceptable margin of error*)
 let in_bounds (s1 : string) (s2 : string) : bool =
   match Mula.Strings.Dem.get_distance ~k:2 s1 s2 with
-  | None -> fase
+  | None -> false
   | Some x -> true
 
 (*Determines whether a guess is correct or not. A guess is correct if it it is
@@ -17,7 +17,9 @@ let correctness (guess : string) (answer : string) : string =
 (*Intializes the random number generator.*)
 let () = Random.self_init ()
 
-(*Creates a list of integers from 0 to size with no repeats.*)
+(*Creates a list of integers from 0 to size with no repeats. Progress is the
+  size of the outputted random list, or how many numbers will be in the list.
+  Progress has the invariant that it cannot be greater than size.*)
 let rec ran_list (acc : int list) (size : int) (progress : int) : int list =
   match progress with
   | 0 -> acc
@@ -35,4 +37,4 @@ let grader (scores : string list) (count : int) : string list =
   let perc = int_of_float (float_of_int cqs /. float_of_int count *. 100.) in
   [ string_of_int cqs; string_of_int perc ]
 
-let speak (s : string) : string = if s = "1" then "RIGHT" else "WRONG"
+let speak (s : string) : string = if s = "1" then "RIGHT" else "WRONG

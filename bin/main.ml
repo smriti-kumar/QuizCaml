@@ -1,4 +1,4 @@
-open Quizcaml.Quiztest
+open At.Testing
 (*In order to play the test activity the Mula library must be installed.*)
 
 let test_question (td : string * string) (num : int) : string list =
@@ -6,12 +6,12 @@ let test_question (td : string * string) (num : int) : string list =
   | i, j ->
       let () =
         print_endline "";
-        print_endline ("Question " ^ string_of_int num ^ ": " ^ i);
+        print_endline ("Question " ^ string_of_int num ^ ": " ^ j);
         print_endline "";
         print_endline "Enter a guess: "
       in
       let guess = read_line () in
-      [ guess; j; correctness guess j ]
+      [ guess; i; correctness guess i ]
 
 let rec test_activity_loop (tdlist : (string * string) list) (rlist : int list)
     (acc : 'a list) (num : int) (count : int) : string list list =
@@ -35,7 +35,7 @@ let rec valid_count (size : int) : int =
     print_endline
       ("Please enter a valid integer from 1 to " ^ string_of_int size ^ "!");
     valid_count size)
-  else if int_of_string input > 0 && int_of_string input < size then
+  else if int_of_string input > 0 && int_of_string input <= size then
     int_of_string input
   else (
     print_endline
@@ -46,7 +46,7 @@ let rec results_loop (num : int) (count : int) (scantron : string list list) =
   if num >= count then print_endline "Good Effort!"
   else (
     print_endline "";
-    print_endline ("QUESTION " ^ string_of_int (num + 1) ^ ":");
+    print_endline ("QUESTION " ^ string_of_int (count - num) ^ ":");
     print_endline
       ("YOUR ANSWER: "
       ^ List.nth (List.nth scantron 0) num
@@ -78,10 +78,11 @@ let test_activity (tdlist : (string * string) list) =
     BatList.transpose (test_activity_loop tdlist rlist [] 0 count)
   in
   let grade = grader (List.nth scantron 2) count in
+  let () = results_loop 0 count scantron in
   let () =
     print_endline "";
     print_endline
       ("RESULTS: " ^ List.nth grade 0 ^ "/" ^ string_of_int count ^ ", "
      ^ List.nth grade 1 ^ "%")
   in
-  results_loop 0 count scantron
+  print_endline ""
