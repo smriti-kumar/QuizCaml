@@ -40,7 +40,10 @@ let start_matching (flashcards : (string * string) list) :
     (string * string) list =
   begin
     print_endline
-      "\n\nMatch each word on the left to a definition on the right\n\n";
+      "\n\n\
+       Match each word on the left to a definition on the right\n\n\
+      \ Enter a number on the left, then a space, followed by a letter on the \
+       right ";
     start_game_logic flashcards;
     round_loop ();
     flashcards
