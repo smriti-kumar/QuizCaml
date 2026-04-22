@@ -16,6 +16,8 @@ let help_start () : unit =
     done
   end
 
+(* We might have to change this because data shouldn't be hard coded (Check-in
+   2)*)
 let small_test_list =
   [
     ("Apple", "Red fruit");
@@ -365,6 +367,10 @@ let flashcard_tests =
            let filename = "../data/small_test.csv" in
            let expected = Some small_test_list in
            let loaded = read_cards filename in
+           assert_equal ~printer:print_card_list_opt expected loaded;
+           let file_name = "../data/invalid_file.csv" in
+           let expected = None in
+           let loaded = read_cards file_name in
            assert_equal ~printer:print_card_list_opt expected loaded );
          ( "[add_card_from_input curr term def] adds a flashcard (term, def) \
             to the curr list of flashcads "
@@ -377,8 +383,8 @@ let flashcard_tests =
            let modified = add_card_from_input curr "Strawberries" "Red fruit" in
            let expected = ("Strawberries", "Red fruit") :: small_test_list in
            assert_equal ~printer:print_card_list expected modified );
-         ( "[remove_card_from_input curr rem_term] removes all flashcards\n\
-           \            with  term rem_term from the curr list of flashcards"
+         ( "[remove_card_from_input curr rem_term] removes all flashcards \
+            with  term rem_term from the curr list of flashcards"
          >:: fun _ ->
            let print_card_list (lst : card_list) : string =
              let card_to_string (t, d) = "(" ^ t ^ ", " ^ d ^ ")" in
