@@ -1,1 +1,3 @@
-let () = print_endline "Hello, World!"
+open Quizcaml.Matching_game_frontend
+
+let () = start_matching ()
