@@ -236,4 +236,5 @@ let review_session (cards : flashcard list) (name : string) =
   in
   if file_exists then
     review_session_helper [] (optimal_order (load_last filename))
-  else review_session_helper [] cards
+  else review_session_helper [] cards;
+  cards
