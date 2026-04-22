@@ -19,33 +19,10 @@ let read_cards (filename : string) : card_list option =
             print_endline
               "\n\
                The provided CSV file has one or more rows that don't contain \
-               exactly 2 rows. Please fix the file!\n";
+               exactly 2 entries. Please fix the file!\n";
             None)
   in
   make_cards data
-
-let upload_cards () : card_list option =
-  print_endline
-    "Please upload a two column CSV file with the entries in the first column \
-     representing the terms and the corresponding entries in the second column \
-     representing that definitions. Enter the path to the file below: ";
-  try
-    let filename = read_line () in
-    read_cards filename
-  with
-  | Sys_error e ->
-      (* maybe redo question instead of error*)
-      print_endline
-        "\n\
-         The file could not be found or was not accessible. Please check the \
-         path of the file!\n";
-      None
-  | Csv.Failure (_, _, _) ->
-      print_endline
-        "\n\
-         The data in the file doesn't correspond to the CSV format so please \
-         double check the formatting of this file!\n";
-      None
 
 let add_card_from_input curr term def : card_list =
   (String.trim term, String.trim def) :: curr

@@ -113,7 +113,9 @@ let print_stats (stats : review_stats list) =
         | Medium -> "Medium"
         | Low -> "Low"
       in
-      print_endline ("Term: " ^ term ^ ", Definition: " ^ def ^ " - " ^ known_status ^ ", " ^ flipped_status ^ ", Confidence: " ^ confidence))
+      print_endline
+        ("Term: " ^ term ^ ", Definition: " ^ def ^ " - " ^ known_status ^ ", "
+       ^ flipped_status ^ ", Confidence: " ^ confidence))
     stats
 
 let review_card (card : flashcard) =
@@ -258,9 +260,6 @@ let test_activity (tdlist : (string * string) list) =
 
 (* flashcards frontend *)
 
-(* As of now, this removes all cards in the list with that term. Can be changed
-   depending on how we want to handle duplicates.*)
-
 let add_card (curr : card_list) : card_list =
   print_string "Please enter the term for the card you want to add: ";
   let term = read_line () in
@@ -268,10 +267,35 @@ let add_card (curr : card_list) : card_list =
   let def = read_line () in
   add_card_from_input curr term def
 
+(* As of now, this removes all cards in the list with that term. Can be changed
+   depending on how we want to handle duplicates.*)
 let remove_card (curr : card_list) : card_list =
   print_string "Please enter the term of the card you want to remove ";
   let rem_term = String.trim (read_line ()) in
   remove_card_from_input curr rem_term
+
+let upload_cards () : card_list option =
+  print_endline
+    "Please upload a two column CSV file with the entries in the first column \
+     representing the terms and the corresponding entries in the second column \
+     representing that definitions. Enter the path to the file below: ";
+  try
+    let filename = read_line () in
+    read_cards filename
+  with
+  | Sys_error e ->
+      (* maybe redo question instead of error*)
+      print_endline
+        "\n\
+         The file could not be found or was not accessible. Please check the \
+         path of the file!\n";
+      None
+  | Csv.Failure (_, _, _) ->
+      print_endline
+        "\n\
+         The data in the file doesn't correspond to the CSV format so please \
+         double check the formatting of this file!\n";
+      None
 
 let rec starter () : card_list =
   print_endline
@@ -333,8 +357,7 @@ let run () =
     if !choice = Some 1 then caml_cards := add_card !caml_cards
     else if !choice = Some 2 then caml_cards := remove_card !caml_cards
     else if !choice = Some 3 then caml_cards := start_matching !caml_cards
-    else if !choice = Some 4 then
-      caml_cards := test_activity !caml_cards
+    else if !choice = Some 4 then caml_cards := test_activity !caml_cards
     else if !choice = Some 5 then (
       print_endline "Name the set you would like to review: ";
       let input_name = read_line () in
