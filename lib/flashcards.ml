@@ -1,8 +1,5 @@
-type card = string * string
-type card_list = card list
-
 (* Cards are added by trimming starting/ending whitespaces*)
-let read_cards (filename : string) : card_list option =
+let read_cards (filename : string) : (string * string) list option =
   let data = Csv.load filename in
   let rec make_cards rows =
     match rows with
@@ -24,10 +21,10 @@ let read_cards (filename : string) : card_list option =
   in
   make_cards data
 
-let add_card_from_input curr term def : card_list =
+let add_card_from_input curr term def : (string * string) list =
   (String.trim term, String.trim def) :: curr
 
-let remove_card_from_input curr rem_term : card_list =
+let remove_card_from_input curr rem_term : (string * string) list =
   let rec remove_term (lst : (string * string) list) acc =
     match lst with
     | [] -> acc

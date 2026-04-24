@@ -82,12 +82,12 @@ let print_flashcard (text : string) =
   print_dash width;
   print_endline ""
 
-let show_term (card : flashcard) =
+let show_term (card : string * string) =
   clear ();
   print_endline "Term:";
   print_flashcard (fst card)
 
-let show_definition (card : flashcard) =
+let show_definition (card : string * string) =
   clear ();
   print_endline "Definition:";
   print_flashcard (snd card)
@@ -118,7 +118,7 @@ let print_stats (stats : review_stats list) =
        ^ flipped_status ^ ", Confidence: " ^ confidence))
     stats
 
-let review_card (card : flashcard) =
+let review_card (card : string * string) =
   show_definition card;
   print_string "Press s to skip, press any other key to flip: ";
   flush stdout;
@@ -142,7 +142,7 @@ let review_card (card : flashcard) =
     in
     (card, true, correct, confidence))
 
-let review_session (cards : flashcard list) (name : string) =
+let review_session (cards : (string * string) list) (name : string) =
   let filename = "flashcard_review_stats/" ^ name ^ "_flashcard_stats.csv" in
   let file_exists = Sys.file_exists filename in
   let rec review_session_helper (acc : review_stats list) cards =
@@ -260,7 +260,7 @@ let test_activity (tdlist : (string * string) list) =
 
 (* flashcards frontend *)
 
-let add_card (curr : card_list) : card_list =
+let add_card (curr : (string * string) list) : (string * string) list =
   print_string "Please enter the term for the card you want to add: ";
   let term = read_line () in
   print_string "Please enter the definition for the card you want to add: ";
@@ -269,12 +269,12 @@ let add_card (curr : card_list) : card_list =
 
 (* As of now, this removes all cards in the list with that term. Can be changed
    depending on how we want to handle duplicates.*)
-let remove_card (curr : card_list) : card_list =
+let remove_card (curr : (string * string) list) : (string * string) list =
   print_string "Please enter the term of the card you want to remove ";
   let rem_term = String.trim (read_line ()) in
   remove_card_from_input curr rem_term
 
-let upload_cards () : card_list option =
+let upload_cards () : (string * string) list option =
   print_endline
     "Please upload a two column CSV file with the entries in the first column \
      representing the terms and the corresponding entries in the second column \
@@ -297,7 +297,7 @@ let upload_cards () : card_list option =
          double check the formatting of this file!\n";
       None
 
-let rec starter () : card_list =
+let rec starter () : (string * string) list =
   print_endline
     "Please choose one of the following options and type your choice below:";
   print_endline "(1) I have an existing CSV file I would like to upload";

@@ -355,7 +355,8 @@ let flashcard_tests =
             the CSV file at filename, and if the format is not valid, it \
             returns None "
          >:: fun _ ->
-           let print_card_list_opt (x : card_list option) : string =
+           let print_card_list_opt (x : (string * string) list option) : string
+               =
              match x with
              | None -> "None"
              | Some lst ->
@@ -375,7 +376,7 @@ let flashcard_tests =
          ( "[add_card_from_input curr term def] adds a flashcard (term, def) \
             to the curr list of flashcads "
          >:: fun _ ->
-           let print_card_list (lst : card_list) : string =
+           let print_card_list (lst : (string * string) list) : string =
              let card_to_string (t, d) = "(" ^ t ^ ", " ^ d ^ ")" in
              "[" ^ String.concat "; " (List.map card_to_string lst) ^ "]"
            in
@@ -386,7 +387,7 @@ let flashcard_tests =
          ( "[remove_card_from_input curr rem_term] removes all flashcards \
             with  term rem_term from the curr list of flashcards"
          >:: fun _ ->
-           let print_card_list (lst : card_list) : string =
+           let print_card_list (lst : (string * string) list) : string =
              let card_to_string (t, d) = "(" ^ t ^ ", " ^ d ^ ")" in
              "[" ^ String.concat "; " (List.map card_to_string lst) ^ "]"
            in
