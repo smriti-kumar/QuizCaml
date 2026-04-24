@@ -19,43 +19,13 @@ let read_cards (filename : string) : card_list option =
             print_endline
               "\n\
                The provided CSV file has one or more rows that don't contain \
-               exactly 2 rows. Please fix the file!\n";
+               exactly 2 entries. Please fix the file!\n";
             None)
   in
   make_cards data
 
-let upload_cards () : card_list option =
-  print_endline
-    "Please upload a two column CSV file with the entries in the first column \
-     representing the terms and the corresponding entries in the second column \
-     representing that definitions. Enter the path to the file below: ";
-  try
-    let filename = read_line () in
-    read_cards filename
-  with
-  | Sys_error e ->
-      (* maybe redo question instead of error*)
-      print_endline
-        "\n\
-         The file could not be found or was not accessible. Please check the \
-         path of the file!\n";
-      None
-  | Csv.Failure (_, _, _) ->
-      print_endline
-        "\n\
-         The data in the file doesn't correspond to the CSV format so please \
-         double check the formatting of this file!\n";
-      None
-
 let add_card_from_input curr term def : card_list =
   (String.trim term, String.trim def) :: curr
-
-let add_card (curr : card_list) : card_list =
-  print_string "Please enter the term for the card you want to add: ";
-  let term = read_line () in
-  print_string "Please enter the definition for the card you want to add: ";
-  let def = read_line () in
-  add_card_from_input curr term def
 
 let remove_card_from_input curr rem_term : card_list =
   let rec remove_term (lst : (string * string) list) acc =
@@ -66,10 +36,3 @@ let remove_card_from_input curr rem_term : card_list =
         else remove_term t ((term, def) :: acc)
   in
   List.rev (remove_term curr [])
-
-(* As of now, this removes all cards in the list with that term. Can be changed
-   depending on how we want to handle duplicates.*)
-let remove_card (curr : card_list) : card_list =
-  print_string "Please enter the term of the card you want to remove ";
-  let rem_term = String.trim (read_line ()) in
-  remove_card_from_input curr rem_term

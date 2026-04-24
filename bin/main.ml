@@ -54,6 +54,70 @@ let start_matching (flashcards : (string * string) list) :
 
 (* flashcard review frontend *)
 
+let clear () =
+  if Sys.os_type = "Unix" then ignore (Sys.command "clear")
+  else ignore (Sys.command "cls")
+
+let rec print_dash (n : int) =
+  if n == 1 then print_string "-"
+  else (
+    print_string "-";
+    print_dash (n - 1))
+
+let print_flashcard (text : string) =
+  let width = 50 in
+  let wrapped = wrap_string text (width - 6) in
+  print_dash width;
+  print_endline "";
+  print_endline ("|" ^ String.make (width - 2) ' ' ^ "|");
+  print_endline ("|" ^ String.make (width - 2) ' ' ^ "|");
+  List.iter
+    (fun line ->
+      print_string "| ";
+      print_string (center_string line (width - 4));
+      print_endline " |")
+    wrapped;
+  print_endline ("|" ^ String.make (width - 2) ' ' ^ "|");
+  print_endline ("|" ^ String.make (width - 2) ' ' ^ "|");
+  print_dash width;
+  print_endline ""
+
+let show_term (card : flashcard) =
+  clear ();
+  print_endline "Term:";
+  print_flashcard (fst card)
+
+let show_definition (card : flashcard) =
+  clear ();
+  print_endline "Definition:";
+  print_flashcard (snd card)
+
+let print_stats (stats : review_stats list) =
+  let percent =
+    List.fold_left
+      (fun acc (_, _, known, _) -> if known then acc + 1 else acc)
+      0 stats
+    * 100 / List.length stats
+  in
+  if percent == 100 then print_string "Congrats! Perfect session. "
+  else if percent >= 70 then print_string "Nice work! "
+  else print_string "Keep practicing! ";
+  print_endline (string_of_int percent ^ "% of cards known.");
+  List.iter
+    (fun ((term, def), flipped, known, conf) ->
+      let known_status = if known then "Known" else "Unknown" in
+      let flipped_status = if flipped then "Flipped" else "Unflipped" in
+      let confidence =
+        match conf with
+        | High -> "High"
+        | Medium -> "Medium"
+        | Low -> "Low"
+      in
+      print_endline
+        ("Term: " ^ term ^ ", Definition: " ^ def ^ " - " ^ known_status ^ ", "
+       ^ flipped_status ^ ", Confidence: " ^ confidence))
+    stats
+
 let review_card (card : flashcard) =
   show_definition card;
   print_string "Press s to skip, press any other key to flip: ";
@@ -195,6 +259,43 @@ let test_activity (tdlist : (string * string) list) =
   tdlist
 
 (* flashcards frontend *)
+
+let add_card (curr : card_list) : card_list =
+  print_string "Please enter the term for the card you want to add: ";
+  let term = read_line () in
+  print_string "Please enter the definition for the card you want to add: ";
+  let def = read_line () in
+  add_card_from_input curr term def
+
+(* As of now, this removes all cards in the list with that term. Can be changed
+   depending on how we want to handle duplicates.*)
+let remove_card (curr : card_list) : card_list =
+  print_string "Please enter the term of the card you want to remove ";
+  let rem_term = String.trim (read_line ()) in
+  remove_card_from_input curr rem_term
+
+let upload_cards () : card_list option =
+  print_endline
+    "Please upload a two column CSV file with the entries in the first column \
+     representing the terms and the corresponding entries in the second column \
+     representing that definitions. Enter the path to the file below: ";
+  try
+    let filename = read_line () in
+    read_cards filename
+  with
+  | Sys_error e ->
+      (* maybe redo question instead of error*)
+      print_endline
+        "\n\
+         The file could not be found or was not accessible. Please check the \
+         path of the file!\n";
+      None
+  | Csv.Failure (_, _, _) ->
+      print_endline
+        "\n\
+         The data in the file doesn't correspond to the CSV format so please \
+         double check the formatting of this file!\n";
+      None
 
 let rec starter () : card_list =
   print_endline
