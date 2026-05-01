@@ -13,10 +13,6 @@ let read_cards (filename : string) : (string * string) list option =
         | _ ->
             (* maybe instead of failwith, redo the question (switch return type
                to option)*)
-            print_endline
-              "\n\
-               The provided CSV file has one or more rows that don't contain \
-               exactly 2 entries. Please fix the file!\n";
             None)
   in
   make_cards data

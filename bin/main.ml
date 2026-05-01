@@ -302,7 +302,14 @@ let upload_cards () : (string * string) list option =
      representing that definitions. Enter the path to the file below: ";
   try
     let filename = read_line () in
-    read_cards filename
+    match read_cards filename with
+    | Some c -> Some c
+    | None ->
+        print_endline
+          "\n\
+           The provided CSV file has one or more rows that don't contain \
+           exactly 2 entries. Please fix the file!\n";
+        None
   with
   | Sys_error e ->
       (* maybe redo question instead of error*)
@@ -350,7 +357,8 @@ let run () =
   let caml_cards = ref (starter ()) in
   while true do
     print_endline
-      "\nPlease choose one of the following games/actions and enter your choice \
+      "\n\
+       Please choose one of the following games/actions and enter your choice \
        below: ";
     print_endline "(1) Add a card";
     print_endline "(2) Remove a card";

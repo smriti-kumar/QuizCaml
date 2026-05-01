@@ -61,6 +61,20 @@ let test_gen_tests =
            assert_equal (grader [ "1"; "1"; "1"; "1"; "1" ] 5) [ "5"; "100" ] );
        ]
 
+(* flashcard_review tests and printer functions *)
+let string_of_conf = function
+  | Low -> "Low"
+  | Medium -> "Medium"
+  | High -> "High"
+
+let string_of_card (t, d) = "(" ^ t ^ ", " ^ d ^ ")"
+
+let string_of_stat ((t, d), flipped, known, conf) =
+  "("
+  ^ string_of_card (t, d)
+  ^ ", flipped=" ^ string_of_bool flipped ^ ", known=" ^ string_of_bool known
+  ^ ", conf=" ^ string_of_conf conf ^ ")"
+
 let flashcard_review_tests =
   "flashcard review test suite"
   >::: [
@@ -243,9 +257,108 @@ let flashcard_review_tests =
               2,\"c\",\"d\",false,true,High\n\
               2,\"e\",\"f\",true,false,Medium\n";
            close_out oc;
-
            let result = load_last file in
            assert_equal ~printer:string_of_int 2 (List.length result) );
+         ( "load_all loads all rows for all sessions with correct session \
+            numbers"
+         >:: fun _ ->
+           let dir =
+             let folder = "data" in
+             if not (Sys.file_exists folder) then
+               ignore (Sys.command "mkdir -p data");
+             folder
+           in
+           let file = Filename.temp_file ~temp_dir:dir "test_load_all" ".csv" in
+           let oc = open_out file in
+           output_string oc
+             "session,term,definition,flipped,known,confidence\n\
+              1,\"a\",\"b\",true,false,Low\n\
+              2,\"c\",\"d\",false,true,High\n\
+              2,\"e\",\"f\",true,false,Medium\n";
+           close_out oc;
+           let loaded = load_all file in
+           assert_equal ~printer:string_of_int 3 (List.length loaded);
+           let sessions = List.map fst loaded in
+           assert_equal
+             ~printer:(fun lst ->
+               "["
+               ^ String.concat "; "
+                   (List.map (fun x -> string_of_int x ^ ", ") lst)
+               ^ "]")
+             [ 1; 2; 2 ] sessions;
+           assert_equal
+             ~printer:(fun lst ->
+               "["
+               ^ String.concat "; "
+                   (List.map
+                      (fun (s, stat) ->
+                        "(" ^ string_of_int s ^ ", " ^ string_of_stat stat ^ ")")
+                      lst)
+               ^ "]")
+             loaded
+             [
+               (1, (("a", "b"), true, false, Low));
+               (2, (("c", "d"), false, true, High));
+               (2, (("e", "f"), true, false, Medium));
+             ] );
+         ( "group_sessions groups stats by session correctly" >:: fun _ ->
+           let history =
+             [
+               (1, (("a", "b"), true, false, Low));
+               (2, (("c", "d"), false, true, High));
+               (2, (("e", "f"), true, false, Medium));
+             ]
+           in
+           let grouped = group_sessions history in
+           assert_equal ~printer:string_of_int 2 (List.length grouped);
+           let session1 = List.assoc 1 grouped in
+           let session2 = List.assoc 2 grouped in
+           assert_equal ~printer:string_of_int 1 (List.length session1);
+           assert_equal ~printer:string_of_int 2 (List.length session2);
+           assert_equal
+             ~printer:(fun lst ->
+               "[" ^ String.concat "; " (List.map string_of_stat lst) ^ "]")
+             session1
+             [ (("a", "b"), true, false, Low) ];
+           assert_equal
+             ~printer:(fun lst ->
+               "[" ^ String.concat "; " (List.map string_of_stat lst) ^ "]")
+             session2
+             [
+               (("e", "f"), true, false, Medium); (("c", "d"), false, true, High);
+             ] );
+         ( "session_known computes correct percentage known" >:: fun _ ->
+           let stats =
+             [
+               (("a", "b"), true, true, Low);
+               (("c", "d"), true, false, Medium);
+               (("e", "f"), true, true, High);
+             ]
+           in
+           let result = session_known stats in
+           assert_bool "2/3 known" (result > 66.0 && result < 67.0) );
+         ( "session_known returns 0% known for empty list" >:: fun _ ->
+           assert_equal ~printer:string_of_float 0.0 (session_known []) );
+         ( "session_confidence computes correct distribution" >:: fun _ ->
+           let stats =
+             [
+               (("a", "b"), true, true, Low);
+               (("c", "d"), true, false, Medium);
+               (("e", "f"), true, true, High);
+               (("g", "h"), true, false, Low);
+             ]
+           in
+           let low, med, high = session_confidence stats in
+           assert_bool "low: 50%" (low > 49.9 && low < 50.1);
+           assert_bool "med: 25%" (med > 24.9 && med < 25.1);
+           assert_bool "high: 25%" (high > 24.9 && high < 25.1) );
+         ( "session_confidence returns 0% confidences for empty list"
+         >:: fun _ ->
+           let low, med, high = session_confidence [] in
+           assert_equal
+             ~printer:(fun (a, b, c) ->
+               Printf.sprintf "(%.2f, %.2f, %.2f)" a b c)
+             (0.0, 0.0, 0.0) (low, med, high) );
        ]
 
 let matching_tests =
