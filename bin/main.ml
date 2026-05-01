@@ -54,16 +54,22 @@ let start_matching (flashcards : (string * string) list) :
 
 (* flashcard review frontend *)
 
+(** [clear ()] clears the terminal screen by moving the current output to the
+    top of the user's screen for Unix operating systems or clears the screen
+    entirely for any other operating system type. *)
 let clear () =
   if Sys.os_type = "Unix" then ignore (Sys.command "clear -x")
   else ignore (Sys.command "cls")
 
+(** [print_dash n] prints a horizontal line of [n] dashes. *)
 let rec print_dash (n : int) =
   if n == 1 then print_string "-"
   else (
     print_string "-";
     print_dash (n - 1))
 
+(** [print_flashcard text] displays [text] inside a formatted flashcard box with
+    fixed width and centered text. *)
 let print_flashcard (text : string) =
   let width = 50 in
   let wrapped = wrap_string text (width - 6) in
@@ -82,16 +88,24 @@ let print_flashcard (text : string) =
   print_dash width;
   print_endline ""
 
+(** [show_term card] clears the screen and displays the term part of [card]. *)
 let show_term (card : string * string) =
   clear ();
   print_endline "Term:";
   print_flashcard (fst card)
 
+(** [show_definition card] clears the screen and displays the definition part of
+    [card]. *)
 let show_definition (card : string * string) =
   clear ();
   print_endline "Definition:";
   print_flashcard (snd card)
 
+(** [print_stats stats] prints a summary of a review session, including the
+    percentage of cards marked as known, an encouraging message based on
+    performance, and detailed per-card results such as term, definition, whether
+    the card was flipped, if it was marked as known, and how confident the user
+    is. *)
 let print_stats (stats : review_stats list) =
   let percent =
     List.fold_left
@@ -121,6 +135,11 @@ let print_stats (stats : review_stats list) =
        ^ flipped_status ^ ", Confidence: " ^ confidence))
     stats
 
+(** [print_progress_history filename] reads stored review history from
+    [filename] and prints per-session statistics, including the percent of cards
+    known in that session and the distribution of confidence levels (low,
+    medium, high). If the file does not exist since the user has never played
+    this set in the flashcard review mode, prints a message indicating that. *)
 let print_progress_history (filename : string) =
   if not (Sys.file_exists filename) then
     print_endline "No previous sessions found."
@@ -139,6 +158,10 @@ let print_progress_history (filename : string) =
       group_hist;
     print_endline ""
 
+(** [review_card card] runs the interactive review flow for a single [card]. The
+    user is allowed to skip the card or flip the card, and if the user flips the
+    card, they can mark it as known/unknown and assign a confidence level to it.
+    Returns the resulting [review_stats] for that card. *)
 let review_card (card : string * string) =
   show_definition card;
   print_string "Press s to skip, press any other key to flip: ";
@@ -163,6 +186,12 @@ let review_card (card : string * string) =
     in
     (card, true, correct, confidence))
 
+(** [review_session cards name] runs a full flashcard review session. If
+    previous session data exists for the set [name], then it plays the game
+    using the optimized order of cards from the most recent session. Otherwise,
+    it plays the provided [cards] in order. The function saves results to a CSV
+    file under [flashcard_review_stats/], prints session statistics at the end,
+    and returns the original list of cards as is. *)
 let review_session (cards : (string * string) list) (name : string) =
   let filename = "flashcard_review_stats/" ^ name ^ "_flashcard_stats.csv" in
   let file_exists = Sys.file_exists filename in
