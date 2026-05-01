@@ -140,6 +140,9 @@ let flashcard_review_tests =
            let row = stat_to_csv 1 stat in
            let card', _, _, _ = csv_to_stat row in
            assert_equal card card' );
+         ( "csv_to_stat fails on invalid CSV format" >:: fun _ ->
+           assert_raises (Failure "Invalid CSV line format") (fun () ->
+               csv_to_stat "random,wrong,strings") );
          ( "get_session extracts session number from csv row" >:: fun _ ->
            assert_equal ~printer:string_of_int 5
              (get_session "5,\"term\",\"def\",true,false,Low") );
