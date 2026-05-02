@@ -29,9 +29,15 @@ let rec ran_list (acc : int list) (size : int) (progress : int) : int list =
         ran_list (num :: acc) size (progress - 1)
       else ran_list acc size progress
 
-(*Takes in a list of "0"s and "1"s and outputs the corresponding grade. The
-  output is a string list where the first element is the number of questions
-  they got correct, and the second is their percent grade*)
+(*Takes in a number and randomly outputs either a 1 or a 2 according to that
+  number*)
+let rec ran_num (seed : int) : int = (Random.int (seed + 2) mod 2) + 1
+
+(*Takes in a list of "0"s and "1"s and outputs the corresponding grade,
+  according to the logic that "0"s are questions they got wrong and "1"s are
+  questions they got right. The output is a string list where the first element
+  is the number of questions they got correct as a string, and the second is
+  their percent grade as a string*)
 let grader (scores : string list) (count : int) : string list =
   let cqs = List.fold_left ( + ) 0 (List.map int_of_string scores) in
   let perc = int_of_float (float_of_int cqs /. float_of_int count *. 100.) in

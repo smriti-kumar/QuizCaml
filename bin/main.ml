@@ -221,25 +221,43 @@ let review_session (cards : (string * string) list) (name : string) =
 (* test generation frontend *)
 
 (*In order to play the test activity the Mula library must be installed.*)
-let test_question (td : string * string) (num : int) : string list =
-  match td with
-  | i, j ->
-      let () =
-        print_endline "";
-        print_endline ("Question " ^ string_of_int num ^ ": " ^ j);
-        print_endline "";
-        print_endline "Enter a guess: "
-      in
-      let guess = read_line () in
-      [ guess; i; correctness guess i ]
+let test_question (td : string * string) (num : int) (mode : int) : string list
+    =
+  if mode = 1 then
+    match td with
+    | i, j ->
+        let () =
+          print_endline "";
+          print_endline ("Definition " ^ string_of_int num ^ ": " ^ j);
+          print_endline "";
+          print_endline "Enter the term: "
+        in
+        let guess = read_line () in
+        [ guess; i; correctness guess i; "DEFINITION"; j ]
+  else
+    match td with
+    | i, j ->
+        let () =
+          print_endline "";
+          print_endline ("Term " ^ string_of_int num ^ ": " ^ i);
+          print_endline "";
+          print_endline "Enter the definition: "
+        in
+        let guess = read_line () in
+        [ guess; j; correctness guess j; "TERM"; i ]
 
 let rec test_activity_loop (tdlist : (string * string) list) (rlist : int list)
-    (acc : 'a list) (num : int) (count : int) : string list list =
+    (acc : 'a list) (num : int) (count : int) (mode : int) : string list list =
   if num = count then acc
+  else if mode = 3 then
+    let ran = ran_num count in
+    let question = List.nth tdlist (List.nth rlist num) in
+    let gar = test_question question (num + 1) ran in
+    test_activity_loop tdlist rlist (gar :: acc) (num + 1) count mode
   else
     let question = List.nth tdlist (List.nth rlist num) in
-    let gar = test_question question (num + 1) in
-    test_activity_loop tdlist rlist (gar :: acc) (num + 1) count
+    let gar = test_question question (num + 1) mode in
+    test_activity_loop tdlist rlist (gar :: acc) (num + 1) count mode
 
 let rec valid_count (size : int) : int =
   let input = read_line () in
@@ -266,7 +284,12 @@ let rec results_loop (num : int) (count : int) (scantron : string list list) =
   if num >= count then print_endline "Good Effort!"
   else (
     print_endline "";
-    print_endline ("QUESTION " ^ string_of_int (count - num) ^ ":");
+    print_endline
+      (List.nth (List.nth scantron 3) num
+      ^ " "
+      ^ string_of_int (count - num)
+      ^ ": "
+      ^ List.nth (List.nth scantron 4) num);
     print_endline
       ("YOUR ANSWER: "
       ^ List.nth (List.nth scantron 0) num
@@ -282,10 +305,20 @@ let test_activity (tdlist : (string * string) list) =
     print_endline "";
     print_endline
       "Welcome to the test activity! In this activity, you will be\n\
-       given a test consisting of random definitions from the set. To get a\n\
-       question right, you must input the correct term to the given definition\n\
-       from a set. Once all questions have been answered, you will be able to\n\
-       see your grade, as well as what questions you got right and wrong.";
+       given a test consisting of random terms/definitions from the set. To \
+       get a\n\
+       question right, you must input what correctly corresponds to the given\n\
+       term/definition. Once all questions have been answered, you will be able\n\
+       to see your grade, as well as what questions you got right and wrong.";
+    print_endline "";
+    print_endline "Pick a game mode:";
+    print_endline "1) Given the definitions, have to respond with terms";
+    print_endline "2) Given the terms, have to respond with definitions";
+    print_endline
+      "3) Given both terms and definitions, have to respond with both"
+  in
+  let mode = valid_count 3 in
+  let () =
     print_endline "";
     print_endline
       ("Enter how many questions (from 1 to "
@@ -295,7 +328,7 @@ let test_activity (tdlist : (string * string) list) =
   let count = valid_count (List.length tdlist) in
   let rlist = ran_list [] (List.length tdlist) count in
   let scantron =
-    BatList.transpose (test_activity_loop tdlist rlist [] 0 count)
+    BatList.transpose (test_activity_loop tdlist rlist [] 0 count mode)
   in
   let grade = grader (List.nth scantron 2) count in
   let () = results_loop 0 count scantron in
