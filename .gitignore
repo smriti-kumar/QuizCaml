@@ -3,3 +3,4 @@ _opam/
 _coverage/
 .DS_Store
 flashcard_review_stats/*.csv
+_matching_scores/

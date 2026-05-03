@@ -14,6 +14,29 @@ let clear () =
 
 (* matching game frontend *)
 
+(*save scores to CSV*)
+let save_matching_scores (username : string) : unit =
+  begin
+    (*file for each user*)
+    let filename = "matching_scores/" ^ username ^ "matching_scores.csv" in
+    let score_data : string list list =
+      [ [ username; string_of_int !num_corr; string_of_int !num_inc ] ]
+    in
+    Csv.save filename score_data
+  end
+
+(*Find scores*)
+let give_matching_score (filename : string) : unit =
+  if Sys.file_exists filename = false then
+    print_endline "User hasn't played yet"
+  else begin
+    let score_info : string list = List.nth (Csv.load filename) 0 in
+    print_endline "\n Matching game scores \n";
+    print_endline ("Username : " ^ List.nth score_info 0 ^ "\n");
+    print_endline ("\nCorrect : " ^ List.nth score_info 1 ^ "\n");
+    print_endline ("\nIncorrect : " ^ List.nth score_info 2 ^ "\n")
+  end
+
 (*Print word assn on LHS and def Assn on RHS*)
 let print_match_choices () : unit =
   for i = 0 to Array.length !word_assn - 1 do
@@ -36,28 +59,53 @@ let guess_feedback (guess : string) () : unit =
       ("\nYou have " ^ string_of_int !num_inc ^ " incorrect guesses\n")
   end
 
+(*Check if guess is made up of valid choices*)
+let check_guess_exists (guess : string) : bool =
+  begin
+    let guess_info : string list = String.split_on_char ' ' guess in
+    let word_num : int = int_of_string (List.nth guess_info 0) in
+    let def_str : string = List.nth guess_info 1 in
+    (*all number choices*)
+    let all_nums : int list =
+      Array.to_list (Array.map (fun (a, b) -> a) !word_assn)
+    in
+    (*al letter choices*)
+    let all_lets : string list =
+      Array.to_list (Array.map (fun (a, b) -> a) !def_assn)
+    in
+    List.mem word_num all_nums && List.mem def_str all_lets
+  end
+
 (*Loop through the game until all pairs are correctly matched*)
-let round_loop () : unit =
+let rec round_loop (username : string) : unit =
   while Array.length !word_assn > 0 do
     print_match_choices ();
     print_endline "\n\nGuess: ";
     let guess : string = read_line () in
-    guess_feedback guess ();
-    (*Give users 3 s to read feedback, before going to next round*)
-    print_endline "\nResuming game ... \n\n";
-    Unix.sleep 2;
-    (*Clear the screen before the next round*)
-    clear ();
-    print_endline "\nTerms left to match: \n\n"
+    (*If guess is inalid, make them redo it*)
+    if check_guess_exists guess = false then
+      print_endline "\nInvalid guess. Please try again.\n"
+    else begin
+      guess_feedback guess ();
+      (*Give users 3 s to read feedback, before going to next round*)
+      Unix.sleep 1;
+      (*Clear the screen before the next round*)
+      clear ();
+      print_endline "\nTerms left to match: \n\n"
+    end
   done;
+
   (*All pairs are matched*)
+  (*Add score to csv*)
+  save_matching_scores username;
+  (*Success message*)
   print_endline "\n\nCongratulations on finishing all matches!\n";
   print_endline
     ("Final results: \n Correct matches: " ^ string_of_int !num_corr
    ^ "\n Incorrect matches: " ^ string_of_int !num_inc)
 
 (*Startup matching*)
-let start_matching (flashcards : (string * string) list) :
+let start_matching (flashcards : (string * string) list) (username : string) :
     (string * string) list =
   begin
     print_endline
@@ -66,7 +114,7 @@ let start_matching (flashcards : (string * string) list) :
        Guess fomat: Enter a number on the left, then a space, followed by a \
        letter on the right ";
     start_game_logic flashcards;
-    round_loop ();
+    round_loop username;
     flashcards
   end
 
@@ -531,7 +579,33 @@ let run () =
             ^ " additional cards to play");
           !caml_cards
         end
-        else start_matching !caml_cards
+        else begin
+          (*Check if wants to play or see score*)
+          print_endline
+            "\n\
+             Do you want to see previous matching scores, or start a new game?\n";
+          print_endline "(1) New Game";
+          print_endline "(2) See Scores";
+          print_endline "Your choice: ";
+          let activity : string = read_line () in
+          if activity = "1" then (*new game*)
+          begin
+            (*Get username*)
+            print_endline "\nEnter your player name\n";
+            let username : string = read_line () in
+            start_matching !caml_cards username
+          end
+          else (*see scores*)
+          begin
+            print_endline "\nEnter player's username\n";
+            let username : string = read_line () in
+            let fname : string =
+              "matching_scores/" ^ username ^ "matching_scores.csv"
+            in
+            give_matching_score fname;
+            !caml_cards
+          end
+        end
     else if !choice = Some 4 then caml_cards := test_activity !caml_cards
     else if !choice = Some 5 then (
       print_endline "Name the set you would like to review: ";
