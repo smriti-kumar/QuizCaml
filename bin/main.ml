@@ -3,6 +3,15 @@ open Quizcaml.Matching_game_logic
 open Quizcaml.Flashcards
 open Quizcaml.Quiztest
 
+(*General frontend*)
+
+(** [clear ()] clears the terminal screen by moving the current output to the
+    top of the user's screen for Unix operating systems or clears the screen
+    entirely for any other operating system type. *)
+let clear () =
+  if Sys.os_type = "Unix" then ignore (Sys.command "clear -x")
+  else ignore (Sys.command "cls")
+
 (* matching game frontend *)
 
 (*Print word assn on LHS and def Assn on RHS*)
@@ -18,19 +27,28 @@ let print_match_choices () : unit =
 
 (*Give feedback on guesses*)
 let guess_feedback (guess : string) () : unit =
-  let corr : bool = check_guess guess in
-  if corr then print_endline "Correct" else print_endline "Incorrect";
-  print_endline ("\nYou have " ^ string_of_int !num_corr ^ " correct guesses\n");
-  print_endline ("\nYou have " ^ string_of_int !num_inc ^ " incorrect guesses\n");
-  print_endline "\nTerms left to match: \n\n"
+  begin
+    let corr : bool = check_guess guess in
+    if corr then print_endline "\nCorrect" else print_endline "\nIncorrect";
+    print_endline
+      ("\nYou have " ^ string_of_int !num_corr ^ " correct guesses\n");
+    print_endline
+      ("\nYou have " ^ string_of_int !num_inc ^ " incorrect guesses\n")
+  end
 
 (*Loop through the game until all pairs are correctly matched*)
 let round_loop () : unit =
   while Array.length !word_assn > 0 do
     print_match_choices ();
-    print_endline "\n\n Guess: ";
+    print_endline "\n\nGuess: ";
     let guess : string = read_line () in
-    guess_feedback guess ()
+    guess_feedback guess ();
+    (*Give users 3 s to read feedback, before going to next round*)
+    print_endline "\nResuming game ... \n\n";
+    Unix.sleep 2;
+    (*Clear the screen before the next round*)
+    clear ();
+    print_endline "\nTerms left to match: \n\n"
   done;
   (*All pairs are matched*)
   print_endline "\n\nCongratulations on finishing all matches!\n";
@@ -44,22 +62,15 @@ let start_matching (flashcards : (string * string) list) :
   begin
     print_endline
       "\n\n\
-       Match each word on the left to a definition on the right\n\n\
-      \ Enter a number on the left, then a space, followed by a letter on the \
-       right ";
+       Goal: Match every word on the left to a definition on the right\n\n\
+       Guess fomat: Enter a number on the left, then a space, followed by a \
+       letter on the right ";
     start_game_logic flashcards;
     round_loop ();
     flashcards
   end
 
 (* flashcard review frontend *)
-
-(** [clear ()] clears the terminal screen by moving the current output to the
-    top of the user's screen for Unix operating systems or clears the screen
-    entirely for any other operating system type. *)
-let clear () =
-  if Sys.os_type = "Unix" then ignore (Sys.command "clear -x")
-  else ignore (Sys.command "cls")
 
 (** [print_dash n] prints a horizontal line of [n] dashes. *)
 let rec print_dash (n : int) =

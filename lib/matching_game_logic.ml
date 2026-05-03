@@ -3,6 +3,8 @@
 (*Give correct/inc*)
 (*Assumes for each word, there is only 1 def*)
 
+(*Add functionality to save matching scores*)
+
 let sample_terms : (string * string) list ref =
   ref
     [
