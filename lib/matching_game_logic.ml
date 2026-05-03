@@ -41,7 +41,7 @@ let def_arr : string array = Array.make 10 ""
 (*Hold number-word associations*)
 let word_assn : (int * string) array ref = ref (Array.make 10 (0, ""))
 
-(*Hold char-def associations*)
+(*Hold string-def associations*)
 let def_assn : (string * string) array ref = ref (Array.make 10 ("z", ""))
 
 (*Hold number of incorrect matching attempts*)
