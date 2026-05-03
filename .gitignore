@@ -1,6 +1,6 @@
 _build/
 _opam/
 _coverage/
+matching_scores/
 .DS_Store
 flashcard_review_stats/*.csv
-_matching_scores/
