@@ -659,16 +659,14 @@ let run () =
         end
     else if !choice = Some 4 then !caml_cards := test_activity !(!caml_cards)
     else if !choice = Some 5 then (
-      print_endline "Name the set you would like to review: ";
-      let input_name = read_line () in
       let filename =
-        "flashcard_review_stats/" ^ input_name ^ "_flashcard_stats.csv"
+        "flashcard_review_stats/" ^ !curr_name ^ "_flashcard_stats.csv"
       in
       print_endline "\n(1) Start review session\n(2) View progress history\n";
       print_string "Your choice: ";
       let subchoice = read_int () in
       if subchoice = 1 then
-        !caml_cards := review_session !(!caml_cards) input_name
+        !caml_cards := review_session !(!caml_cards) !curr_name
       else print_progress_history filename)
     else if !choice = Some 6 then (
       let new_name, new_cards = start_new_cards () in
