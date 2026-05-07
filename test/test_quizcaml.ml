@@ -577,8 +577,8 @@ let flashcard_tests =
            let modified = add_card_from_input curr "Strawberries" "Red fruit" in
            let expected = ("Strawberries", "Red fruit") :: small_test_list in
            assert_equal ~printer:print_card_list expected modified );
-         ( "[remove_card_from_input curr rem_term] removes all flashcards \
-            with  term rem_term from the curr list of flashcards"
+         ( "[remove_card_from_input curr rem_term] removes all flashcards with \
+            term rem_term from the curr list of flashcards"
          >:: fun _ ->
            let print_card_list (lst : (string * string) list) : string =
              let card_to_string (t, d) = "(" ^ t ^ ", " ^ d ^ ")" in
@@ -600,6 +600,61 @@ let flashcard_tests =
              ]
            in
            assert_equal ~printer:print_card_list expected modified );
+         ( "[remove_card_from_input curr rem_term] causes no changes to curr \
+            when there isn't a term rem_term in the set"
+         >:: fun _ ->
+           let print_card_list (lst : (string * string) list) : string =
+             let card_to_string (t, d) = "(" ^ t ^ ", " ^ d ^ ")" in
+             "[" ^ String.concat "; " (List.map card_to_string lst) ^ "]"
+           in
+           let curr = small_test_list in
+           let modified = remove_card_from_input curr "Onion" in
+           let expected =
+             [
+               ("Apple", "Red fruit");
+               ("Orange", "Orange fruit");
+               ("Lettuce", "Green vegetable");
+               ("Carrot", "Orange vegetable");
+               ("Mango", "Yellow fruit");
+               ("Grape", "Purple fruit");
+               ("Rainbow Chard", "Rainbow fruit");
+               ("Watermelon", "Green fruit");
+               ("Potato", "Yellow vegetable");
+               ("Eggplant", "Purple vegetable");
+             ]
+           in
+           assert_equal ~printer:print_card_list expected modified );
+         ( "[export_set_from_input cards_list set_name] correctly exports all \
+            contents of the the set named set_name and to a CSV file and \
+            returns the correct filepath"
+         >:: fun _ ->
+           let print_card_list (lst : (string * string) list) : string =
+             let card_to_string (t, d) = "(" ^ t ^ ", " ^ d ^ ")" in
+             "[" ^ String.concat "; " (List.map card_to_string lst) ^ "]"
+           in
+           let print_path (filename : string) : string = filename in
+           let original =
+             match read_cards "../data/small_test.csv" with
+             | None -> failwith "Failed to read test CSV"
+             | Some cards -> cards
+           in
+           let modified =
+             remove_card_from_input
+               (remove_card_from_input original "Lettuce")
+               "Carrot"
+           in
+           let cards_list =
+             [ ("original", ref original); ("modified", ref modified) ]
+           in
+           let expected_path = "output/modified.csv" in
+           let actual_path = export_set_from_input cards_list "modified" in
+           let loaded_back =
+             match read_cards actual_path with
+             | None -> failwith "Failed to read test CSV"
+             | Some cards -> cards
+           in
+           assert_equal ~printer:print_path expected_path actual_path;
+           assert_equal ~printer:print_card_list modified loaded_back );
        ]
 
 let tests =
