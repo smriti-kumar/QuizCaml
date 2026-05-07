@@ -475,7 +475,7 @@ let add_card (curr : (string * string) list) : (string * string) list =
 (* As of now, this removes all cards in the list with that term. Can be changed
    depending on how we want to handle duplicates.*)
 let remove_card (curr : (string * string) list) : (string * string) list =
-  print_string "Please enter the term of the card you want to remove ";
+  print_string "Please enter the term of the card you want to remove: ";
   let rem_term = String.trim (read_line ()) in
   remove_card_from_input curr rem_term
 
@@ -509,9 +509,49 @@ let upload_cards () : (string * string) list option =
          double check the formatting of this file!\n";
       None
 
-let rec starter () : (string * string) list =
+let print_cards (cards_list : (string * (string * string) list ref) list ref) =
+  let lst = !cards_list in
+  let rec print_set (set_list : (string * (string * string) list ref) list) =
+    match set_list with
+    | [] -> ()
+    | (name, terms_list) :: t ->
+        print_endline ("\nName: " ^ name ^ "\n");
+        let terms = !terms_list in
+        let rec print_terms (term_list : (string * string) list) =
+          match term_list with
+          | [] -> ()
+          | (term, def) :: tl ->
+              print_endline ("Term: " ^ term ^ "; Definition: " ^ def);
+              print_terms tl
+        in
+        print_terms terms;
+        print_endline "-------------------------------";
+        print_set t
+  in
+  print_set lst
+
+let export_set (cards_list : (string * (string * string) list ref) list ref) =
   print_endline
-    "Please choose one of the following options and type your choice below:";
+    "\nPlease enter the name of the set you would like to export as a CSV: ";
+  let name_input = String.trim (read_line ()) in
+  match List.assoc_opt name_input !cards_list with
+  | None ->
+      print_endline
+        "\n\
+        \ There isn't a set with this name. Please double check the spelling. \
+         You can also view all your sets by selecting 8 in the main menu"
+  | Some switch_set ->
+      let filepath = export_set_from_input !cards_list name_input in
+      print_endline
+        ("The set " ^ name_input
+       ^ " has been exported. Here's the filepath to it: " ^ filepath)
+
+let rec start_new_cards () : string * (string * string) list =
+  print_endline
+    "\nWhat would you like to name this set? Please type the name below:";
+  let name = read_line () in
+  print_endline
+    "\nPlease choose one of the following options and type your choice below:";
   print_endline "(1) I have an existing CSV file I would like to upload";
   print_endline
     "(2) I don't have a starter set but would like to manually add cards";
@@ -532,32 +572,43 @@ let rec starter () : (string * string) list =
 
   if !choice = Some 1 then
     match upload_cards () with
-    | None -> starter ()
-    | Some x -> x
-  else add_card []
+    | None -> start_new_cards ()
+    | Some x -> (name, x)
+  else (name, add_card [])
 
 let run () =
-  print_endline "\nWelcome to QuizCaml!\n";
-  let caml_cards = ref (starter ()) in
+  print_endline "\nWelcome to QuizCaml!";
+  let caml_cards_list = ref [] in
+  let name, cards = start_new_cards () in
+  let caml_cards = ref (ref cards) in
+  let curr_name = ref name in
+  caml_cards_list := (name, !caml_cards) :: !caml_cards_list;
   while true do
+    print_endline ("\nYou are currently on the set " ^ !curr_name);
     print_endline
       "\n\
        Please choose one of the following games/actions and enter your choice \
        below: ";
     print_endline "(1) Add a card";
-    print_endline "(2) Remove a card";
+    print_endline "(2) Remove a card\n";
     print_endline "(3) Matching";
     print_endline "(4) Testing";
-    print_endline "(5) Flashcard Review";
-    print_endline "(6) Quit";
+    print_endline "(5) Flashcard Review\n";
+    print_endline "(6) Add a new set";
+    print_endline "(7) Switch to a different set";
+    print_endline "(8) View all sets";
+    print_endline "(9) Export a set\n";
+    print_endline "(10) Quit";
     let choice = ref None in
     let take_input () =
       try
         print_string "Your choice: ";
         flush stdout;
         let input = read_int () in
-        if input = 6 then exit 0
-        else if input = 1 || input = 2 || input = 3 || input = 4 || input = 5
+        if input = 10 then exit 0
+        else if
+          input = 1 || input = 2 || input = 3 || input = 4 || input = 5
+          || input = 6 || input = 7 || input = 8 || input = 9
         then choice := Some input
         else print_endline "\nThat is not a valid choice. Please try again\n"
       with Failure _ ->
@@ -566,16 +617,16 @@ let run () =
     while !choice = None do
       take_input ()
     done;
-    if !choice = Some 1 then caml_cards := add_card !caml_cards
-    else if !choice = Some 2 then caml_cards := remove_card !caml_cards
+    if !choice = Some 1 then !caml_cards := add_card !(!caml_cards)
+    else if !choice = Some 2 then !caml_cards := remove_card !(!caml_cards)
     else if !choice = Some 3 then
       caml_cards :=
-        if List.length !caml_cards < 10 then begin
+        if List.length !(!caml_cards) < 10 then begin
           print_endline
             ("\n\n\
               Must have at least 10 flashcards to do matching game. \n\
               Add at least "
-            ^ string_of_int (10 - List.length !caml_cards)
+            ^ string_of_int (10 - List.length !(!caml_cards))
             ^ " additional cards to play");
           !caml_cards
         end
@@ -593,7 +644,7 @@ let run () =
             (*Get username*)
             print_endline "\nEnter your player name\n";
             let username : string = read_line () in
-            start_matching !caml_cards username
+            ref (start_matching !(!caml_cards) username)
           end
           else (*see scores*)
           begin
@@ -606,7 +657,7 @@ let run () =
             !caml_cards
           end
         end
-    else if !choice = Some 4 then caml_cards := test_activity !caml_cards
+    else if !choice = Some 4 then !caml_cards := test_activity !(!caml_cards)
     else if !choice = Some 5 then (
       print_endline "Name the set you would like to review: ";
       let input_name = read_line () in
@@ -616,8 +667,32 @@ let run () =
       print_endline "\n(1) Start review session\n(2) View progress history\n";
       print_string "Your choice: ";
       let subchoice = read_int () in
-      if subchoice = 1 then caml_cards := review_session !caml_cards input_name
+      if subchoice = 1 then
+        !caml_cards := review_session !(!caml_cards) input_name
       else print_progress_history filename)
+    else if !choice = Some 6 then (
+      let new_name, new_cards = start_new_cards () in
+      let new_name = String.trim new_name in
+      let new_caml_cards = ref new_cards in
+      caml_cards_list := (new_name, new_caml_cards) :: !caml_cards_list;
+      caml_cards := new_caml_cards;
+      curr_name := new_name)
+    else if !choice = Some 7 then (
+      print_endline
+        "\nPlease enter the name of the set you would like to switch to below:";
+      let name_input = String.trim (read_line ()) in
+      match List.assoc_opt name_input !caml_cards_list with
+      | None ->
+          print_endline
+            "\n\
+            \ There isn't a set with this name. Please double check the \
+             spelling. You can also view all your sets by selecting 8 in the \
+             main menu"
+      | Some switch_set ->
+          curr_name := name_input;
+          caml_cards := switch_set)
+    else if !choice = Some 8 then print_cards caml_cards_list
+    else if !choice = Some 9 then export_set caml_cards_list
   done
 
 (* main driver *)
