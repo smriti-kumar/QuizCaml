@@ -583,6 +583,7 @@ let run () =
   let curr_name = ref name in
   caml_cards_list := (name, !caml_cards) :: !caml_cards_list;
   while true do
+    clear ();
     print_endline ("\nYou are currently on the set " ^ !curr_name);
     print_endline
       "\n\
