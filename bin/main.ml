@@ -6,11 +6,10 @@ open Quizcaml.Quiztest
 (*General frontend*)
 
 (** [clear ()] clears the terminal screen by moving the current output to the
-    top of the user's screen for Unix operating systems or clears the screen
-    entirely for any other operating system type. *)
+    top of the user's screen while preserving scrollback. *)
 let clear () =
-  if Sys.os_type = "Unix" then ignore (Sys.command "clear -x")
-  else ignore (Sys.command "cls")
+  print_string "\027[2J\027[H";
+  flush stdout
 
 (* matching game frontend *)
 
