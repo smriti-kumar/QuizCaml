@@ -195,6 +195,7 @@ let print_stats (stats : review_stats list) =
   else if percent >= 50 then print_string "You're getting there! "
   else print_string "Keep practicing! ";
   print_endline (string_of_int percent ^ "% of cards known.");
+  Unix.sleep 2;
   List.iter
     (fun ((term, def), flipped, known, conf) ->
       let known_status = if known then "Known" else "Unknown" in
@@ -231,7 +232,8 @@ let print_progress_history (filename : string) =
            Confidence: %.2f%% | High Confidence: %.2f%%\n"
           session acc low med high)
       group_hist;
-    print_endline ""
+    print_endline "";
+    Unix.sleep 3
 
 (** [review_card card] runs the interactive review flow for a single [card]. The
     user is allowed to skip the card or flip the card, and if the user flips the
@@ -486,6 +488,7 @@ let test_activity (tdlist : (string * string) list) =
      ^ List.nth grade 1 ^ "%")
   in
   print_endline "";
+  Unix.sleep 2;
   tdlist
 
 (* flashcards frontend *)
@@ -609,6 +612,7 @@ let run () =
   let curr_name = ref name in
   caml_cards_list := (name, !caml_cards) :: !caml_cards_list;
   while true do
+    Unix.sleep 1;
     clear ();
     print_endline ("\nYou are currently on the set " ^ !curr_name);
     print_endline
