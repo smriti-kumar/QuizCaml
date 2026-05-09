@@ -5,6 +5,9 @@ open Quizcaml.Quiztest
 
 (*General frontend*)
 
+(*stores name of current set being used*)
+let set_name : string ref = ref ""
+
 (** [clear ()] clears the terminal screen by moving the current output to the
     top of the user's screen while preserving scrollback. *)
 let clear () =
@@ -17,7 +20,9 @@ let clear () =
 let save_matching_scores (username : string) : unit =
   begin
     (*file for each user*)
-    let filename = "matching_scores/" ^ username ^ "matching_scores.csv" in
+    let filename =
+      "matching_scores/" ^ username ^ "-" ^ !set_name ^ "matching_scores.csv"
+    in
     let score_data : string list list =
       [ [ username; string_of_int !num_corr; string_of_int !num_inc ] ]
     in
@@ -27,7 +32,7 @@ let save_matching_scores (username : string) : unit =
 (*Find scores*)
 let give_matching_score (filename : string) : unit =
   if Sys.file_exists filename = false then
-    print_endline "User hasn't played yet"
+    print_endline "User hasn't played on this set yet"
   else begin
     let score_info : string list = List.nth (Csv.load filename) 0 in
     print_endline "\n Matching game scores \n";
@@ -62,17 +67,26 @@ let guess_feedback (guess : string) () : unit =
 let check_guess_exists (guess : string) : bool =
   begin
     let guess_info : string list = String.split_on_char ' ' guess in
-    let word_num : int = int_of_string (List.nth guess_info 0) in
-    let def_str : string = List.nth guess_info 1 in
-    (*all number choices*)
-    let all_nums : int list =
-      Array.to_list (Array.map (fun (a, b) -> a) !word_assn)
+    (*Check if first part is even a number*)
+    let num_choices : string list =
+      [ "1"; "2"; "3"; "4"; "5"; "6"; "7"; "8"; "9"; "10" ]
     in
-    (*al letter choices*)
-    let all_lets : string list =
-      Array.to_list (Array.map (fun (a, b) -> a) !def_assn)
-    in
-    List.mem word_num all_nums && List.mem def_str all_lets
+    if List.mem (List.nth guess_info 0) num_choices = true then begin
+      (*After verigying first part of guess is a number [1,10], check if it is
+        valid number of remaining choices*)
+      let word_num : int = int_of_string (List.nth guess_info 0) in
+      let def_str : string = List.nth guess_info 1 in
+      (*all number choices*)
+      let all_nums : int list =
+        Array.to_list (Array.map (fun (a, b) -> a) !word_assn)
+      in
+      (*al letter choices*)
+      let all_lets : string list =
+        Array.to_list (Array.map (fun (a, b) -> a) !def_assn)
+      in
+      List.mem word_num all_nums && List.mem def_str all_lets
+    end
+    else false
   end
 
 (*Loop through the game until all pairs are correctly matched*)
@@ -548,7 +562,7 @@ let export_set (cards_list : (string * (string * string) list ref) list ref) =
 let rec start_new_cards () : string * (string * string) list =
   print_endline
     "\nWhat would you like to name this set? Please type the name below:";
-  let name = read_line () in
+  set_name := read_line ();
   print_endline
     "\nPlease choose one of the following options and type your choice below:";
   print_endline "(1) I have an existing CSV file I would like to upload";
@@ -572,8 +586,8 @@ let rec start_new_cards () : string * (string * string) list =
   if !choice = Some 1 then
     match upload_cards () with
     | None -> start_new_cards ()
-    | Some x -> (name, x)
-  else (name, add_card [])
+    | Some x -> (!set_name, x)
+  else (!set_name, add_card [])
 
 let run () =
   print_endline "\nWelcome to QuizCaml!";
@@ -651,7 +665,8 @@ let run () =
             print_endline "\nEnter player's username\n";
             let username : string = read_line () in
             let fname : string =
-              "matching_scores/" ^ username ^ "matching_scores.csv"
+              "matching_scores/" ^ username ^ "-" ^ !set_name
+              ^ "matching_scores.csv"
             in
             give_matching_score fname;
             !caml_cards
