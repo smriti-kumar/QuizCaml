@@ -293,6 +293,7 @@ let review_session (cards : (string * string) list) (name : string) =
 (* test generation frontend *)
 
 (*In order to play the test activity the Mula library must be installed.*)
+
 let rec valid_count (size : int) : int =
   let input = read_line () in
   if
@@ -321,6 +322,7 @@ let test_question (td : string * string) (num : int) (mode : int) : string list
     | i, j ->
         let () =
           print_endline "";
+          print_endline "---------------------------------------------------";
           print_endline ("Definition " ^ string_of_int num ^ ": " ^ j);
           print_endline "";
           print_endline "Enter the term: "
@@ -332,6 +334,7 @@ let test_question (td : string * string) (num : int) (mode : int) : string list
     | i, j ->
         let () =
           print_endline "";
+          print_endline "---------------------------------------------------";
           print_endline ("Term " ^ string_of_int num ^ ": " ^ i);
           print_endline "";
           print_endline "Enter the definition: "
@@ -357,6 +360,7 @@ let mcq_question (tdlist : (string * string) list) (question : int) (num : int)
         let ques = List.nth j 1 in
         let () =
           print_endline "";
+          print_endline "---------------------------------------------------";
           print_endline ("Definition " ^ string_of_int (num + 1) ^ ": " ^ ques);
           print_endline "";
           print_endline "Choose the correct term:"
@@ -372,6 +376,7 @@ let mcq_question (tdlist : (string * string) list) (question : int) (num : int)
         let ques = List.nth j 1 in
         let () =
           print_endline "";
+          print_endline "---------------------------------------------------";
           print_endline ("Term " ^ string_of_int (num + 1) ^ ": " ^ ques);
           print_endline "";
           print_endline "Choose the correct definition:"
@@ -466,6 +471,10 @@ let test_activity (tdlist : (string * string) list) =
     BatList.transpose (test_activity_loop tdlist rlist [] 0 count mode gtype)
   in
   let grade = grader (List.nth scantron 2) count in
+  let () =
+    print_endline "";
+    print_endline "---------------------------------------------------"
+  in
   let () = results_loop 0 count scantron in
   let () =
     print_endline "";
