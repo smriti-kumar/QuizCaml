@@ -31,14 +31,17 @@ let save_matching_scores (username : string) : unit =
 
 (*Find scores*)
 let give_matching_score (filename : string) : unit =
-  if Sys.file_exists filename = false then
-    print_endline "User hasn't played on this set yet"
+  if Sys.file_exists filename = false then begin
+    print_endline "User hasn't played on this set yet";
+    Unix.sleep 1
+  end
   else begin
     let score_info : string list = List.nth (Csv.load filename) 0 in
     print_endline "\n Matching game scores \n";
     print_endline ("Username : " ^ List.nth score_info 0 ^ "\n");
     print_endline ("\nCorrect : " ^ List.nth score_info 1 ^ "\n");
-    print_endline ("\nIncorrect : " ^ List.nth score_info 2 ^ "\n")
+    print_endline ("\nIncorrect : " ^ List.nth score_info 2 ^ "\n");
+    Unix.sleep 3
   end
 
 (*Print word assn on LHS and def Assn on RHS*)
