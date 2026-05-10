@@ -5,7 +5,7 @@ open Quizcaml.Quiztest
 
 (*General frontend*)
 
-(*stores name of current set being used*)
+(** [set_name] stores name of current set being used *)
 let set_name : string ref = ref ""
 
 (** [clear ()] clears the terminal screen by moving the current output to the
@@ -16,7 +16,9 @@ let clear () =
 
 (* matching game frontend *)
 
-(*save scores to CSV*)
+(** [save_matching_scores username] saves the current matching game score for
+    [username] on the active set to a CSV file. The file stores the username,
+    number of correct guesses, and number of incorrect guesses. *)
 let save_matching_scores (username : string) : unit =
   begin
     (*file for each user*)
@@ -29,7 +31,10 @@ let save_matching_scores (username : string) : unit =
     Csv.save filename score_data
   end
 
-(*Find scores*)
+(** [give_matching_score filename] reads and prints the matching game score
+    stored in [filename], including the username, correct guesses, and incorrect
+    guesses. If the file does not exist, prints a message indicating the user
+    has not yet played on this set. *)
 let give_matching_score (filename : string) : unit =
   if Sys.file_exists filename = false then begin
     print_endline "User hasn't played on this set yet";
@@ -44,7 +49,9 @@ let give_matching_score (filename : string) : unit =
     Unix.sleep 3
   end
 
-(*Print word assn on LHS and def Assn on RHS*)
+(** [print_match_choices ()] prints the current matching game board to the
+    terminal. Displays word assignments on the left side labeled with integers
+    and definition assignments on the right side labeled with letters. *)
 let print_match_choices () : unit =
   for i = 0 to Array.length !word_assn - 1 do
     Printf.printf "%d) %-20s %-4s %s) %s\n\n"
@@ -55,7 +62,9 @@ let print_match_choices () : unit =
       (snd !def_assn.(i))
   done
 
-(*Give feedback on guesses*)
+(** [guess_feedback guess ()] checks [guess] against the current matching game
+    state, prints whether the guess was correct or incorrect, and displays the
+    updated counts of correct and incorrect guesses so far. *)
 let guess_feedback (guess : string) () : unit =
   begin
     let corr : bool = check_guess guess in
@@ -66,7 +75,10 @@ let guess_feedback (guess : string) () : unit =
       ("\nYou have " ^ string_of_int !num_inc ^ " incorrect guesses\n")
   end
 
-(*Check if guess is made up of valid choices*)
+(** [check_guess_exists guess] returns [true] if [guess] is a valid matching
+    game guess, and [false] otherwise. A valid guess is a number corresponding
+    to a wotermrd on the left and a letter corresponding to a definition on the
+    right, with a space in the middle. *)
 let check_guess_exists (guess : string) : bool =
   begin
     let guess_info : string list = String.split_on_char ' ' guess in
@@ -92,7 +104,10 @@ let check_guess_exists (guess : string) : bool =
     else false
   end
 
-(*Loop through the game until all pairs are correctly matched*)
+(** [round_loop username] repeatedly prints the current matching game board,
+    asks the user for a guess, and processes valid guesses until all pairs have
+    been matched. Invalid guesses are rejected with an error message. On
+    completion, saves scores and prints final results. *)
 let rec round_loop (username : string) : unit =
   while Array.length !word_assn > 0 do
     print_match_choices ();
@@ -120,7 +135,10 @@ let rec round_loop (username : string) : unit =
     ("Final results: \n Correct matches: " ^ string_of_int !num_corr
    ^ "\n Incorrect matches: " ^ string_of_int !num_inc)
 
-(*Startup matching*)
+(** [start_matching flashcards username] initializes and runs a full matching
+    game session using [flashcards]. Prints instructions, sets up game state,
+    runs the main matching game loop, and returns the original [flashcards] list
+    unchanged. *)
 let start_matching (flashcards : (string * string) list) (username : string) :
     (string * string) list =
   begin
@@ -299,6 +317,10 @@ let review_session (cards : (string * string) list) (name : string) =
 
 (*In order to play the test activity the Mula library must be installed.*)
 
+(** [valid_count size] reads a line from stdin and returns the integer value if
+    it is between 1 and [size]. If the input is not a valid integer in that
+    range, prints an error message and keeps prompting until a valid input is
+    received. *)
 let rec valid_count (size : int) : int =
   let input = read_line () in
   if
@@ -320,6 +342,12 @@ let rec valid_count (size : int) : int =
       ("Please enter a valid integer from 1 to " ^ string_of_int size ^ "!");
     valid_count size)
 
+(** [test_question td num mode] displays a single short answer test question for
+    the term-definition pair [td] labeled with question number [num]. If [mode]
+    is 1, gives the definition and asks for the term, and otherwise, gives the
+    term and asks for the definition. Returns a list containing the user's
+    guess, the correct answer, whether the answer was correct, the question type
+    label, and the prompt text. *)
 let test_question (td : string * string) (num : int) (mode : int) : string list
     =
   if mode = 1 then
@@ -347,6 +375,9 @@ let test_question (td : string * string) (num : int) (mode : int) : string list
         let guess = read_line () in
         [ guess; j; correctness guess j; "TERM"; i ]
 
+(** [mcq_printer choices n] recursively prints the multiple choice options in
+    [choices] starting from index [n], formatted as numbered items. Stops after
+    printing all four choices. *)
 let rec mcq_printer (choices : string list) (n : int) =
   if n >= 3 then print_endline ("4) " ^ List.nth choices 3)
   else
@@ -355,6 +386,13 @@ let rec mcq_printer (choices : string list) (n : int) =
     in
     mcq_printer choices (n + 1)
 
+(** [mcq_question tdlist question num mode] displays a single multiple choice
+    question for the card at index [question] in [tdlist], labeled as question
+    number [num]. If [mode] is 1, gives the definition and asks the user to
+    choose the correct term, and otherwise gives the term and asks the user to
+    choose the correct definition. Returns a list containing the user's selected
+    answer, the correct answer, whether the answer was correct, the question
+    type label, and the prompt text. *)
 let mcq_question (tdlist : (string * string) list) (question : int) (num : int)
     (mode : int) =
   if mode = 1 then
@@ -390,6 +428,13 @@ let mcq_question (tdlist : (string * string) list) (question : int) (num : int)
         let guess = List.nth i (valid_count 4 - 1) in
         [ guess; ans; correctness guess ans; "TERM"; ques ]
 
+(** [test_activity_loop tdlist rlist acc num count mode gtype] generates and
+    collects responses for a test containing [count] number of questions. Uses
+    indices from [rlist] to select cards from [tdlist]. [num] is the current
+    question index and [acc] accumulates results. [mode] controls whether
+    questions are term to definition, definition to term, or mixed. [gtype]
+    controls whether questions are fill-in-the-answer or multiple choice.
+    Returns the accumulated list of per-question result lists. *)
 let rec test_activity_loop (tdlist : (string * string) list) (rlist : int list)
     (acc : 'a list) (num : int) (count : int) (mode : int) (gtype : int) :
     string list list =
@@ -404,6 +449,11 @@ let rec test_activity_loop (tdlist : (string * string) list) (rlist : int list)
     let gar = test_question question (num + 1) (List.nth eureka (mode - 1)) in
     test_activity_loop tdlist rlist (gar :: acc) (num + 1) count mode gtype
 
+(** [results_loop num count scantron] recursively prints the result for each
+    question from index [num] up to [count] using [scantron]. For each question,
+    prints the question type, the user's answer, the correct answer, and whether
+    it was correct. Prints a closing message when all results have been
+    displayed. *)
 let rec results_loop (num : int) (count : int) (scantron : string list list) =
   if num >= count then print_endline "Good Effort!"
   else (
@@ -424,6 +474,11 @@ let rec results_loop (num : int) (count : int) (scantron : string list list) =
     print_endline "";
     results_loop (num + 1) count scantron)
 
+(** [mcq_validation length] checks whether the set has enough cards for multiple
+    choice questions. If [length] is less than 4, prints an explanation and
+    returns 1 to force fill-in-the-answer mode. Otherwise, prompts the user to
+    choose between fill-in-the-answer and multiple choice, and returns the
+    validated choice. *)
 let mcq_validation (length : int) : int =
   if length < 4 then (
     print_endline "";
@@ -442,6 +497,10 @@ let mcq_validation (length : int) : int =
     in
     valid_count 2
 
+(** [test_activity tdlist] runs a full test session on [tdlist]. Prompts the
+    user to choose a question type, a game mode, and a question count. Runs the
+    selected number of questions and displays a results breakdown. Returns the
+    original [tdlist] unchanged. *)
 let test_activity (tdlist : (string * string) list) =
   let () =
     print_endline "";
@@ -493,6 +552,8 @@ let test_activity (tdlist : (string * string) list) =
 
 (* flashcards frontend *)
 
+(** [add_card curr] prompts the user to enter a term and definition, adds the
+    new card to [curr], and returns the updated flashcard list. *)
 let add_card (curr : (string * string) list) : (string * string) list =
   print_string "Please enter the term for the card you want to add: ";
   let term = read_line () in
@@ -500,13 +561,20 @@ let add_card (curr : (string * string) list) : (string * string) list =
   let def = read_line () in
   add_card_from_input curr term def
 
-(* As of now, this removes all cards in the list with that term. Can be changed
-   depending on how we want to handle duplicates.*)
+(** [remove_card curr] prompts the user to enter a term, removes all cards in
+    [curr] with that term, and returns the updated flashcard list. As of now,
+    this removes all cards in the list with that term. Can be changed depending
+    on how we want to handle duplicates. *)
 let remove_card (curr : (string * string) list) : (string * string) list =
   print_string "Please enter the term of the card you want to remove: ";
   let rem_term = String.trim (read_line ()) in
   remove_card_from_input curr rem_term
 
+(** [upload_cards ()] prompts the user for a file path, tries to load a
+    two-column CSV from that path, and returns [Some cards] on success. Returns
+    [None] and prints an appropriate error message if the file is not found, is
+    not accessible, has irregular CSV content, or contains rows that don't have
+    exactly two entries. *)
 let upload_cards () : (string * string) list option =
   print_endline
     "Please upload a two column CSV file with the entries in the first column \
@@ -537,6 +605,10 @@ let upload_cards () : (string * string) list option =
          double check the formatting of this file!\n";
       None
 
+(** [print_cards cards_list] prints all sets and their term-definition pairs
+    stored in [cards_list] to the terminal. For each set, displays the set name
+    followed by each term and its corresponding definition, along with a divider
+    line. *)
 let print_cards (cards_list : (string * (string * string) list ref) list ref) =
   let lst = !cards_list in
   let rec print_set (set_list : (string * (string * string) list ref) list) =
@@ -558,6 +630,9 @@ let print_cards (cards_list : (string * (string * string) list ref) list ref) =
   in
   print_set lst
 
+(** [export_set cards_list] prompts the user for the name of a set in
+    [cards_list] and exports it to a CSV. Prints the resulting filepath on
+    success, or an error message if no set with the given name exists. *)
 let export_set (cards_list : (string * (string * string) list ref) list ref) =
   print_endline
     "\nPlease enter the name of the set you would like to export as a CSV: ";
@@ -574,6 +649,10 @@ let export_set (cards_list : (string * (string * string) list ref) list ref) =
         ("The set " ^ name_input
        ^ " has been exported. Here's the filepath to it: " ^ filepath)
 
+(** [start_new_cards ()] prompts the user to name a new flashcard set and choose
+    how to populate it, either by uploading an existing CSV file or by manually
+    adding cards. Returns a pair of the set name and the initial card list.
+    Prompts again if an upload fails so the user can try again. *)
 let rec start_new_cards () : string * (string * string) list =
   print_endline
     "\nWhat would you like to name this set? Please type the name below:";
@@ -604,6 +683,13 @@ let rec start_new_cards () : string * (string * string) list =
     | Some x -> (!set_name, x)
   else (!set_name, add_card [])
 
+(** [run ()] is the main game loop. Initializes the QuizCaml game, prompts the
+    user to create an initial flashcard set, then displays the main menu and
+    switches to the selected activity or action, returning to the main menu
+    after that activity or action is completed. Handles adding and removing
+    cards, matching, testing, flashcard review, adding new sets, switching
+    between sets, viewing all sets, and exporting sets. Exits when the user
+    selects quit. *)
 let run () =
   print_endline "\nWelcome to QuizCaml!";
   let caml_cards_list = ref [] in

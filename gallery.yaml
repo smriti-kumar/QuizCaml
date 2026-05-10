@@ -1,0 +1,33 @@
+---
+# Members of your group.
+group: 
+ - name: Smriti Kumar
+   netid: sk3452
+ - name: Trishia Khandelwal
+   netid: tk735
+ - name: Urja Saha
+   netid: us64
+ - name: Conner Whalen
+   netid: cjw289
+
+
+# Your PM.
+pm:
+ name: Arya Datla
+ netid: avd42
+# Set to false if you don't want your gallery entry to be public.
+publish: false
+# Pithy title
+title: "QuizCaml"
+# OK if this is a Cornell Github link, but public gallery viewers won't be able to see it.
+git-repo: "https://github.com/smriti-kumar/QuizCaml"
+# Replace the URL with your own demo video.
+demo-video-url: "https://youtu.be/7GcoA0mygeg"
+# Write a short, attention-grabbing description of your project.
+desc: >
+ Our project, QuizCaml, is a terminal-based comprehensive study tool. Users are able to
+ add flashcards using pre-defined CSV files, or add them in the application. From there,
+ they can flip through the flashcards, noting their confidence levels, play the matching
+ game, or take an open-ended test. The user is also able to seamlessly switch between 
+ multiple study sets. The user interface is easy to understand, with clear instructions 
+ for the user every step of the way.

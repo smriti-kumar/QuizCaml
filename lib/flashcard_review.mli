@@ -1,16 +1,16 @@
-(* Confidence level assigned to a flashcard during flashcard review mode.
+(** Confidence level assigned to a flashcard during flashcard review mode.
    Default low if card is skipped or confidence level is not selected. *)
 type confidence =
   | Low
   | Medium
   | High
 
-(* Flashcard record used for cross-session tracking of flashcard statistics.
+(** Flashcard record used for cross-session tracking of flashcard statistics.
    Contains (term, definition), confidence level, and number of times reviewed.
    Default is (term, definition), Low, 0. *)
 type flashcard_record = (string * string) * confidence * int
 
-(* Review statistics for a flashcard during a review session. Contains (term,
+(** Review statistics for a flashcard during a review session. Contains (term,
    definition), whether the card was flipped, whether the user marked it as
    known, and the confidence level. Default is (term, definition), false, false,
    Low. *)
